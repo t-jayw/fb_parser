@@ -9,7 +9,10 @@ class Thread(object):
         self.soup = threadSoup
         self.participants = threadSoup.contents[0].split(',')
         self.messagesSoup = self.soup.findAll('div', {"class":"message"})
-        self.Messages = [Message(msg) for msg in self.messagesSoup]
+        self.Messages = []
+
+    def aggregateMessages(self):
+        self.Messages = (Message(msg) for msg in self.messagesSoup)
 
 class Message(object):
     def __init__(self, msgSoup):
@@ -38,4 +41,15 @@ if __name__ == "__main__":
 
     bar = [Thread(x) for x in foo]
 
-    print(bar[3].Messages[0].content)
+    baz = [x.aggregateMessages() for x in bar]
+
+#    for k in bar:
+#    for f in k.Messages:
+#            if (f.sender[0] == 'Brent Klauck'):
+#                if len(f.content) > 0:
+#                    print(f.sender, f.content[0])
+#                    print ((f.sender[0] == 'Brent Klauck'))
+#            else:
+#                pass
+
+
