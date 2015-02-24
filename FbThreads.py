@@ -1,4 +1,4 @@
-
+import nltk
 from bs4 import BeautifulSoup as bs
 
 stubfile = "/Users/tylerw/msgsample.htm"
@@ -7,12 +7,14 @@ stubfile = "/Users/tylerw/msgsample.htm"
 class Thread(object):
     def __init__(self, threadSoup):
         self.soup = threadSoup
-        self.participants = threadSoup.contents[0].split(',')
+        self.participants = [name.strip() for name in
+                        threadSoup.contents[0].split(',')]
         self.messagesSoup = self.soup.findAll('div', {"class":"message"})
         self.Messages = []
 
     def aggregateMessages(self):
-        self.Messages = (Message(msg) for msg in self.messagesSoup)
+        self.Messages = [Message(msg) for msg in self.messagesSoup
+                                if len(msg.findNext('p').contents) > 0]
 
 class Message(object):
     def __init__(self, msgSoup):
@@ -23,25 +25,33 @@ class Message(object):
     def printMessage(self):
         print(self.content)
 
-def msgSoup(msgfile):
-    with file(msgfile) as f:
-        htmString = f.read()
-    return bs(htmString)
+class Archive(object):
+    def __init__(self, filepath):
+        self.archivePath = filepath
+        self.archiveSoup = ""
+        self.threadObjects = True
 
-def pullThreads(soup):
-    thread_divs = (soup.findAll("div", {"class" : "thread"}))
-    return thread_divs
+    def makeArchiveSoup(self):
+        with file(self.archivePath) as f:
+            raw = f.read()
+            self.archiveSoup = bs(raw)
 
+    def pullThreads(self):
+        threadTags = (self.archiveSoup.findAll("div", {"class" : "thread"}))
+        self.threadObjects = [Thread(x) for x in threadTags]
 
+    def pullMessages(self):
+            [thread.aggregateMessages() for thread in self.threadObjects]
 
 if __name__ == "__main__":
-    stubsoup = msgSoup(stubfile)
+    foo = Archive(stubfile)
+    foo.makeArchiveSoup()
+    foo.pullThreads()
+    foo.pullMessages()
 
-    foo = pullThreads(stubsoup)
-
-    bar = [Thread(x) for x in foo]
-
-    baz = [x.aggregateMessages() for x in bar]
+    for x in foo.threadObjects:
+        if 'Edmarc Hedrick' in x.participants:
+            print [msg.content for msg in x.Messages]
 
 #    for k in bar:
 #    for f in k.Messages:
