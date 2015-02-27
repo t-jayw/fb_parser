@@ -7,7 +7,8 @@ fullfile = "/Users/tylerw/Downloads/facebook-tylerjaywoodd/html/messages.htm"
 
 
 def tokenizeString(string):
-    tokenized = nltk.word_tokenize(string)
+    tokenizer = nltk.tokenize.RegexpTokenizer(r'\w{4,}')
+    tokenized = tokenizer.tokenize(string)
     return tokenized
 
 def removeStopWords(wordlist):
@@ -96,7 +97,7 @@ class PeopleArchive(Archive):
 
 
 if __name__ == "__main__":
-    foo = PeopleArchive(fullfile, "Tyler Wood", "Edmarc Hedrick")
+    foo = PeopleArchive(fullfile, "Tyler Wood", "Edmarc Hedric")
     foo.makeArchiveSoup()
     foo.pullThreads()
     foo.pullPersonMessages()
@@ -110,4 +111,11 @@ if __name__ == "__main__":
 
     for k, v in foo.personMessageDict.items():
         print k, len(v)
+
+    cfd = nltk.ConditionalFreqDist([person, word]
+            for person in foo.members
+            for word in foo.personMessageDict[person])
+
+    for person in foo.members:
+        print person, cfd[person].most_common(30)
 
