@@ -153,14 +153,15 @@ if __name__ == "__main__":
 
 
     print "EDMARC"
-
+    print "\n"
     e = checkPersonUniqueWords('Edmarc Hedrick')
     es = sorted(e, key = lambda x: x[1])
 
     for x in es[-20:]:
         print x[0],"\t", x[1]
 
-
+    print "COOPS"
+    print "\n"
     c = checkPersonUniqueWords('Christine Cooper')
     cs = sorted(c, key = lambda x: x[1])
 
