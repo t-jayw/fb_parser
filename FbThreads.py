@@ -18,9 +18,9 @@ def removeStopWords(wordlist):
 
 def prepString4Nltk(string):
     tokenized = tokenizeString(string)
+    tokenized = [x.lower() for x in tokenized]
     words = removeStopWords(tokenized)
     return words
-
 
 class Thread(object):
     def __init__(self, threadSoup):
@@ -62,9 +62,12 @@ class Archive(object):
 
 
 class PeopleArchive(Archive):
-    def __init__(self, filepath, *members):
-        super(PeopleArchive, self).__init__(filepath)
+    def __init__(self,  *members):
+        # super(PeopleArchive, self).__init__(filepath)
         self.members = [name for name in members]
+        self.archiveSoup = bar.archiveSoup
+        self.threadObjects = bar.threadObjects
+        self.probList = {}
 
     def pullPersonMessages(self):
         """
@@ -74,7 +77,7 @@ class PeopleArchive(Archive):
         personMessageDict = {name: "" for name in self.members}
         test = []
         for thread in self.threadObjects:
-            if len(set(self.members) & set(thread.participants)) > 1:
+            if len(set(self.members) & set(thread.participants)) > 0:
                 test.append(thread.participants)
                 thread.aggregateMessages()
                 for message in thread.Messages:
@@ -95,27 +98,71 @@ class PeopleArchive(Archive):
     def findTopWords(self, *person):
         pass
 
+    def assignProbabilities(self, person):
+        fd = nltk.FreqDist(self.personMessageDict[person])
+        probDist = nltk.MLEProbDist(fd)
+        for y in probDist.samples():
+            self.probList[y] =  probDist.prob(y)
+
+
+def checkPersonUniqueWords(person, peopleDict):
+    personDict = peopleDict[person]
+    returnVec = []
+    for word in personDict:
+        unique = True
+        for name in peopleDict:
+            try:
+                if peopleDict[name][word] > personDict[word]:
+                    unique = False
+                else:
+                    pass
+            except KeyError:
+                pass
+        if unique == True:
+            returnVec.append((word, personDict[word]))
+    return returnVec
 
 if __name__ == "__main__":
-    foo = PeopleArchive(fullfile, "Tyler Wood", "Edmarc Hedric")
-    foo.makeArchiveSoup()
-    foo.pullThreads()
-    foo.pullPersonMessages()
+    bar = Archive(fullfile)
+    bar.makeArchiveSoup()
+    bar.pullThreads()
 
-    for k, v in foo.personMessageDict.items():
-        print k, len(v)
+    agg = {}
 
-    foo.prepPersonMessageDict("Tyler Wood", "Edmarc Hedrick")
+    for thread in bar.threadObjects:
+        for person in thread.participants:
+            print person
+            if person not in agg:
+                agg[person] = PeopleArchive(person)
+            else:
+                continue
 
-    print(len(foo.personMessageDict))
+    print len(agg)
 
-    for k, v in foo.personMessageDict.items():
-        print k, len(v)
+    probListDict = {}
 
-    cfd = nltk.ConditionalFreqDist([person, word]
-            for person in foo.members
-            for word in foo.personMessageDict[person])
+    for x, v in agg.items():
+        print "pulling messages " + x
+        #agg[x].pullMessages
+        agg[x].pullPersonMessages()
 
-    for person in foo.members:
-        print person, cfd[person].most_common(30)
+        agg[x].prepPersonMessageDict(x)
+        print "probs for " + x
+        agg[x].assignProbabilities(x)
+        probListDict[x] = agg[x].probList
 
+
+    print "EDMARC"
+
+    e = checkPersonUniqueWords('Edmarc Hedrick')
+    es = sorted(e, key = lambda x: x[1])
+
+    for x in es[-20:]:
+        print x[0],"\t", x[1]
+
+
+    c = checkPersonUniqueWords('Christine Cooper')
+    cs = sorted(c, key = lambda x: x[1])
+
+    for x in cs[-25:]:
+        print x[0],"\t", x[1]
