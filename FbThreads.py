@@ -152,18 +152,10 @@ if __name__ == "__main__":
         probListDict[x] = agg[x].probList
 
 
-    print "EDMARC"
+    print "jason"
     print "\n"
-    e = checkPersonUniqueWords('Edmarc Hedrick')
+    e = checkPersonUniqueWords('Aparna Nemana', probListDict)
     es = sorted(e, key = lambda x: x[1])
 
-    for x in es[-20:]:
-        print x[0],"\t", x[1]
-
-    print "COOPS"
-    print "\n"
-    c = checkPersonUniqueWords('Christine Cooper')
-    cs = sorted(c, key = lambda x: x[1])
-
-    for x in cs[-25:]:
+    for x in es[-50:]:
         print x[0],"\t", x[1]
