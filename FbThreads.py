@@ -4,8 +4,6 @@ from bs4 import BeautifulSoup as bs
 stubfile = "/Users/tylerw/msgsample.htm"
 fullfile = "/Users/tylerw/Downloads/facebook-tylerjaywoodd/html/messages.htm"
 
-
-
 def tokenizeString(string):
     tokenizer = nltk.tokenize.RegexpTokenizer(r'\w{4,}')
     tokenized = tokenizer.tokenize(string)
@@ -46,20 +44,62 @@ class Message(object):
 class Archive(object):
     def __init__(self, filepath):
         self.archivePath = filepath
+        self.makeArchiveSoup()
+        self.pullThreads()
 
     def makeArchiveSoup(self):
         with file(self.archivePath) as f:
             raw = f.read()
             self.archiveSoup = bs(raw)
+        print "archive is souped"
+
+    def personInConvo(self, name, threadObj):
+        if name in threadObj.participants:
+            return True
+        else:
+            return False
 
     def pullThreads(self):
         self.threadObjects = [Thread(x) for x in
                 self.archiveSoup.findAll("div", {"class" : "thread"})]
+        print "threads are pulled"
 
     def pullMessages(self):
             [thread.aggregateMessages() for thread in self.threadObjects]
 
+    def personThreads(self, *members):
+        """For all names provided in members, extract threads in which
+        they are participants and return a dict of
+        {Person: [Thread objects]}"""
 
+        memList = [name for name in members]
+        personThreadDict = {name: [] for name in memList}
+        memList = [name for name in members]
+        for thread in self.threadObjects:
+            for name in memList:
+                if self.personInConvo(name, thread):
+                    personThreadDict[name].append(thread)
+                else:
+                    pass
+        return personThreadDict
+
+    def personMessages(self, *members):
+        """For all names provided in members, create personThreadDict
+        and then iterate through the dict to collect all string messages
+        sent by provided people. Return a dict of:
+        {Person: ["lorem ipsum etc..."]"""
+
+        memList = [name for name in members]
+        personMessageDict = {name:"" for name in memList}
+        personThreadDict = self.personThreads(*members)
+        for threadcollection in personThreadDict.itervalues():
+            for thread in threadcollection:
+                thread.aggregateMessages()
+                for message in thread.Messages:
+                    if message.sender in memList:
+                        name = message.sender
+                        personMessageDict[name] += ("\n" + message.content)
+        return personMessageDict
 
 class PeopleArchive(Archive):
     def __init__(self,  *members):
@@ -123,39 +163,37 @@ def checkPersonUniqueWords(person, peopleDict):
     return returnVec
 
 if __name__ == "__main__":
-    bar = Archive(fullfile)
-    bar.makeArchiveSoup()
-    bar.pullThreads()
+    bar = Archive(stubfile)
 
-    agg = {}
-
-    for thread in bar.threadObjects:
-        for person in thread.participants:
-            print person
-            if person not in agg:
-                agg[person] = PeopleArchive(person)
-            else:
-                continue
-
-    print len(agg)
-
-    probListDict = {}
-
-    for x, v in agg.items():
-        print "pulling messages " + x
-        #agg[x].pullMessages
-        agg[x].pullPersonMessages()
-
-        agg[x].prepPersonMessageDict(x)
-        print "probs for " + x
-        agg[x].assignProbabilities(x)
-        probListDict[x] = agg[x].probList
-
-
-    print "jason"
-    print "\n"
-    e = checkPersonUniqueWords('Aparna Nemana', probListDict)
-    es = sorted(e, key = lambda x: x[1])
-
-    for x in es[-50:]:
-        print x[0],"\t", x[1]
+#    agg = {}
+#
+#    for thread in bar.threadObjects:
+#        for person in thread.participants:
+#            print person
+#            if person not in agg:
+#                agg[person] = PeopleArchive(person)
+#            else:
+#                continue
+#
+#    print len(agg)
+#
+#    probListDict = {}
+#
+#    for x, v in agg.items():
+#        print "pulling messages " + x
+#        #agg[x].pullMessages
+#        agg[x].pullPersonMessages()
+#
+#        agg[x].prepPersonMessageDict(x)
+#        print "probs for " + x
+#        agg[x].assignProbabilities(x)
+#        probListDict[x] = agg[x].probList
+#
+#
+#    print "jason"
+#    print "\n"
+#    e = checkPersonUniqueWords('Aparna Nemana', probListDict)
+#    es = sorted(e, key = lambda x: x[1])
+#
+#    for x in es[-50:]:
+#        print x[0],"\t", x[1]
